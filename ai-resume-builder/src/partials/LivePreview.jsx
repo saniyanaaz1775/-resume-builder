@@ -56,8 +56,10 @@ export default function LivePreview({ data }) {
   const showSkills = (data.skills || "").trim().length > 0;
   const showLinks = !!((data.links || {}).github || (data.links || {}).linkedin);
 
+  const templateClass = (data.template || "Classic").toLowerCase();
+
   return (
-    <div className="preview-card">
+    <div className={`preview-card template-${templateClass}`}>
       <div className="score-block">
         <label className="score-label">ATS Readiness Score</label>
         <div className="score-meter" aria-hidden>
@@ -65,9 +67,12 @@ export default function LivePreview({ data }) {
         </div>
         <div className="score-value">{score}/100</div>
         {suggestions.length > 0 && (
-          <ul className="suggestions">
-            {suggestions.map((s, i) => <li key={i}>{s}</li>)}
-          </ul>
+          <div className="improvements">
+            <div style={{fontWeight:700,marginTop:10}}>Top 3 Improvements</div>
+            <ul className="suggestions">
+              {suggestions.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
         )}
       </div>
 

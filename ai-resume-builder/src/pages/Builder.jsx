@@ -6,7 +6,7 @@ const sample = {
   summary: "Product-focused engineering leader with 8+ years building delightful developer tools.",
   education: [{ school: "State University", degree: "B.S. Computer Science", year: "2016" }],
   experience: [{ company: "Acme Corp", role: "Senior Engineer", years: "2019–2024", bullets: ["Built features", "Led team"] }],
-  projects: [{ name: "Project X", desc: "A tool for X", bullets: ["Achieved 2x growth"] }],
+  projects: [{ name: "Project X", desc: "A tool for X", bullets: ["Achieved 2x growth"] }, { name: "Project Y", desc: "Another project", bullets: ["Improved X by 30%"] }],
   skills: "React,Node.js,TypeScript,Testing",
   links: { github: "https://github.com/janedoe", linkedin: "https://linkedin.com/in/janedoe" }
 };
@@ -28,7 +28,8 @@ export default function Builder() {
       experience: [],
       projects: [],
       skills: "",
-      links: { github: "", linkedin: "" }
+    links: { github: "", linkedin: "" },
+    template: "Classic"
     };
   });
 
@@ -40,6 +41,11 @@ export default function Builder() {
       // ignore
     }
   }, [data]);
+
+  // template helper
+  function setTemplate(t) {
+    setData(prev => ({ ...prev, template: t }));
+  }
 
   function loadSample() {
     setData(sample);
@@ -85,6 +91,19 @@ export default function Builder() {
 
   return (
     <div className="builder-grid container">
+      <div className="template-tabs" style={{gridColumn: "1 / -1", marginBottom: 12}}>
+        <label className="tabs-label">Template:</label>
+        {["Classic","Modern","Minimal"].map(t => (
+          <button
+            key={t}
+            className={`tab ${data.template === t ? "active":""}`}
+            onClick={()=>setTemplate(t)}
+            style={{marginLeft:8}}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
       <section className="left-col">
         <div className="form-section">
           <h3>Personal Info</h3>
@@ -119,11 +138,19 @@ export default function Builder() {
               <input placeholder="Role" value={ex.role || ""} onChange={e=>updateArrayItem("experience", i, "role", e.target.value)} />
               <input placeholder="Years" value={ex.years || ""} onChange={e=>updateArrayItem("experience", i, "years", e.target.value)} />
               <div className="bullets">
-                {(ex.bullets || []).map((b, bi) => (
-                  <div key={bi} className="bullet-row">
-                    <input placeholder="Bullet" value={b} onChange={e=>updateBullet("experience", i, bi, e.target.value)} />
-                  </div>
-                ))}
+                {(ex.bullets || []).map((b, bi) => {
+                  const startsWithVerb = /^[\s]*((Built|Developed|Designed|Implemented|Led|Improved|Created|Optimized|Automated|Managed|Reduced|Increased|Delivered|Engineered)\b)/i.test(b || "");
+                  const hasNumber = /[\d%kK×xX]/.test(b || "");
+                  return (
+                    <div key={bi} className="bullet-row">
+                      <input placeholder="Bullet" value={b} onChange={e=>updateBullet("experience", i, bi, e.target.value)} />
+                      <div className="hint">
+                        {!startsWithVerb && (b || "").trim() !== "" && <span className="warn">Start with a strong action verb. </span>}
+                        {!hasNumber && (b || "").trim() !== "" && <span className="info">Add measurable impact (numbers).</span>}
+                      </div>
+                    </div>
+                  );
+                })}
                 <button onClick={()=>addBullet("experience", i)}>Add bullet</button>
               </div>
             </div>
@@ -138,11 +165,19 @@ export default function Builder() {
               <input placeholder="Project name" value={p.name || ""} onChange={e=>updateArrayItem("projects", i, "name", e.target.value)} />
               <input placeholder="Short description" value={p.desc || ""} onChange={e=>updateArrayItem("projects", i, "desc", e.target.value)} />
               <div className="bullets">
-                {(p.bullets || []).map((b, bi) => (
-                  <div key={bi} className="bullet-row">
-                    <input placeholder="Bullet" value={b} onChange={e=>updateBullet("projects", i, bi, e.target.value)} />
-                  </div>
-                ))}
+                {(p.bullets || []).map((b, bi) => {
+                  const startsWithVerb = /^[\s]*((Built|Developed|Designed|Implemented|Led|Improved|Created|Optimized|Automated|Managed|Reduced|Increased|Delivered|Engineered)\b)/i.test(b || "");
+                  const hasNumber = /[\d%kK×xX]/.test(b || "");
+                  return (
+                    <div key={bi} className="bullet-row">
+                      <input placeholder="Bullet" value={b} onChange={e=>updateBullet("projects", i, bi, e.target.value)} />
+                      <div className="hint">
+                        {!startsWithVerb && (b || "").trim() !== "" && <span className="warn">Start with a strong action verb. </span>}
+                        {!hasNumber && (b || "").trim() !== "" && <span className="info">Add measurable impact (numbers).</span>}
+                      </div>
+                    </div>
+                  );
+                })}
                 <button onClick={()=>addBullet("projects", i)}>Add bullet</button>
               </div>
             </div>
