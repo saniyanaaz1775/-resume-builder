@@ -29,3 +29,20 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);c
 .muted{color:#666}
 .resume-print{background:#fff;padding:24px;border-radius:8px;border:1px solid #ddd}
 
+/* Score meter */
+.score-block{margin-bottom:14px;padding:8px;border-radius:8px;background:#fafafa;border:1px solid #eee}
+.score-label{display:block;font-size:12px;color:#666;margin-bottom:6px}
+.score-meter{background:#eee;height:12px;border-radius:999px;overflow:hidden}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--accent),#b00000);transition:width 220ms ease}
+.score-value{font-weight:700;margin-top:8px}
+.suggestions{margin:8px 0 0;padding-left:18px;color:#444}
+.suggestions li{margin-bottom:6px}
+
+.preview-item{margin:8px 0}
+.preview-item ul{margin:6px 0 0;padding-left:18px}
+
+.edu-row,.exp-row,.proj-row{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.bullet-row{display:flex;gap:8px;margin-bottom:6px}
+.bullet-row input{flex:1}
+.bullets button{margin-top:6px;padding:6px 8px;border-radius:6px;background:#eee;border:1px solid #ddd}
+
