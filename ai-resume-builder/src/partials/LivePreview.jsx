@@ -8,7 +8,7 @@ function hasNumberLike(text = "") {
   return /[\d%kK×xX]/.test(text || "");
 }
 
-export default function LivePreview({ data }) {
+export default function LivePreview({ data, onChange }) {
   const scoreData = useMemo(() => {
     const summaryWords = wordCount(data.summary);
     const projectsCount = (data.projects || []).filter(p => (p.name || p.desc || (p.bullets && p.bullets.some(Boolean)))).length;
@@ -72,9 +72,97 @@ export default function LivePreview({ data }) {
   const showLinks = !!((data.links || {}).github || (data.links || {}).linkedin);
 
   const templateClass = (data.template || "Classic").toLowerCase();
+  const accent = data.color || 'hsl(168,60%,40%)';
+  const templates = [
+    { id: "Classic", label: "Classic" },
+    { id: "Modern", label: "Modern" },
+    { id: "Minimal", label: "Minimal" }
+  ];
+  const colors = [
+    { id: "teal", label: "Teal", value: "hsl(168, 60%, 40%)" },
+    { id: "navy", label: "Navy", value: "hsl(220, 60%, 35%)" },
+    { id: "burgundy", label: "Burgundy", value: "hsl(345, 60%, 35%)" },
+    { id: "forest", label: "Forest", value: "hsl(150, 50%, 30%)" },
+    { id: "charcoal", label: "Charcoal", value: "hsl(0, 0%, 25%)" }
+  ];
+
+  function setTemplate(t) {
+    if (onChange) onChange(prev => ({ ...prev, template: t }));
+    else {
+      // fallback: persist to localStorage
+      try {
+        const s = localStorage.getItem("resumeBuilderData");
+        const obj = s ? JSON.parse(s) : {};
+        obj.template = t;
+        localStorage.setItem("resumeBuilderData", JSON.stringify(obj));
+      } catch {}
+    }
+  }
+
+  function setColor(v) {
+    if (onChange) onChange(prev => ({ ...prev, color: v }));
+    else {
+      try {
+        const s = localStorage.getItem("resumeBuilderData");
+        const obj = s ? JSON.parse(s) : {};
+        obj.color = v;
+        localStorage.setItem("resumeBuilderData", JSON.stringify(obj));
+      } catch {}
+    }
+  }
 
   return (
-    <div className={`preview-card template-${templateClass}`}>
+    <div className={`preview-card template-${templateClass}`} style={{["--accent"]: accent}}>
+      <div className="template-picker">
+        <div className="thumbnails">
+          {templates.map(t => {
+            const active = (data.template || "Classic") === t.id;
+            return (
+              <button key={t.id} className={`thumbnail ${active ? "active":""}`} onClick={()=>setTemplate(t.id)} aria-pressed={active}>
+                <div className="thumb-sketch">
+                  {t.id === "Classic" && (
+                    <>
+                      <div className="sketch-header"></div>
+                      <div className="sketch-rule"></div>
+                      <div className="sketch-lines">
+                        <div></div><div></div><div></div>
+                      </div>
+                    </>
+                  )}
+                  {t.id === "Modern" && (
+                    <>
+                      <div className="sketch-modern">
+                        <div className="sketch-sidebar" style={{background: accent}}></div>
+                        <div className="sketch-main">
+                          <div></div><div></div><div></div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {t.id === "Minimal" && (
+                    <>
+                      <div className="sketch-minimal">
+                        <div className="sketch-min-title"></div>
+                        <div className="sketch-min-lines"><div></div><div></div></div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {active && <div className="thumb-check">✓</div>}
+                <div className="thumb-label">{t.label}</div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="color-picker">
+          {colors.map(c => {
+            const active = (data.color || accent) === c.value;
+            return (
+              <button key={c.id} className={`color-dot ${active ? "active":""}`} style={{background: c.value}} onClick={()=>setColor(c.value)} aria-label={c.label} />
+            );
+          })}
+        </div>
+      </div>
       <div className="score-block">
         <label className="score-label">ATS Readiness Score</label>
         <div className="score-meter" aria-hidden>

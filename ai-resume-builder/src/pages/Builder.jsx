@@ -338,7 +338,7 @@ export default function Builder() {
       </section>
 
       <aside className="right-col">
-        <LivePreview data={data} />
+        <LivePreview data={data} onChange={setData} />
       </aside>
     </div>
   );

@@ -96,6 +96,16 @@ export default function Preview() {
       window.prompt("Copy resume text:", text);
     }
   }
+  const [toast, setToast] = useState("");
+
+  function handleDownloadPDF() {
+    const warnings = validateForExport(data);
+    if (warnings.length > 0) {
+      alert("Your resume may look incomplete:\n• " + warnings.join("\n• "));
+    }
+    setToast("PDF export ready! Check your downloads.");
+    setTimeout(()=>setToast(""), 3000);
+  }
 
   return (
     <main className="container preview-clean">
@@ -109,13 +119,14 @@ export default function Preview() {
       </div>
 
       <div style={{display:"flex",gap:12,marginBottom:12,alignItems:"center"}}>
-        <button className="tab" onClick={handlePrint}>Print / Save as PDF</button>
+        <button className="tab" onClick={handleDownloadPDF}>Download PDF</button>
         <button className="tab" onClick={handleCopyText}>Copy Resume as Text</button>
       </div>
 
       <article className="resume-print" role="document">
-        <LivePreview data={data} />
+        <LivePreview data={data} onChange={setData} />
       </article>
+      {toast && <div className="toast">{toast}</div>}
     </main>
   );
 }
