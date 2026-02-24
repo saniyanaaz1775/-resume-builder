@@ -92,3 +92,18 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);c
 .resume-print { page-break-after: auto; }
 .preview-item { overflow: visible; }
 
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{background:#f1f1f1;padding:6px 8px;border-radius:999px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.chip button{background:transparent;border:none;cursor:pointer;color:#666;padding:0;margin-left:6px}
+
+/* project cards */
+.project-card{border:1px solid #eee;padding:12px;border-radius:8px;margin-bottom:10px;background:#fff}
+.project-head{display:flex;justify-content:space-between;align-items:center}
+.project-links a{margin-left:8px;text-decoration:none}
+.tech-pills{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+.char-count{font-size:12px;color:#666;margin-top:4px}
+.project-entry{border:1px solid #f0f0f0;padding:8px;border-radius:8px;margin-top:8px}
+.project-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:6px}
+.project-body{padding:8px 0}
+

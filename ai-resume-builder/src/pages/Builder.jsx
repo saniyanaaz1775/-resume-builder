@@ -6,8 +6,11 @@ const sample = {
   summary: "Product-focused engineering leader with 8+ years building delightful developer tools.",
   education: [{ school: "State University", degree: "B.S. Computer Science", year: "2016" }],
   experience: [{ company: "Acme Corp", role: "Senior Engineer", years: "2019–2024", bullets: ["Built features", "Led team"] }],
-  projects: [{ name: "Project X", desc: "A tool for X", bullets: ["Achieved 2x growth"] }, { name: "Project Y", desc: "Another project", bullets: ["Improved X by 30%"] }],
-  skills: "React,Node.js,TypeScript,Testing",
+  projects: [
+    { id: Date.now()+1, title: "Project X", desc: "A tool for X", tech: ["React","Node.js"], liveUrl: "", githubUrl: "", collapsed: false },
+    { id: Date.now()+2, title: "Project Y", desc: "Another project", tech: ["GraphQL"], liveUrl: "", githubUrl: "", collapsed: false }
+  ],
+  skills: { technical: ["React","TypeScript"], soft: ["Team Leadership"], tools: ["Git","Docker"] },
   links: { github: "https://github.com/janedoe", linkedin: "https://linkedin.com/in/janedoe" }
 };
 
@@ -27,9 +30,9 @@ export default function Builder() {
       education: [],
       experience: [],
       projects: [],
-      skills: "",
+      skills: { technical: [], soft: [], tools: [] },
     links: { github: "", linkedin: "" },
-    template: "Classic"
+      template: "Classic"
     };
   });
 
@@ -42,6 +45,47 @@ export default function Builder() {
     }
   }, [data]);
 
+  // local inputs for tag fields
+  const [skillInput, setSkillInput] = React.useState({ technical: "", soft: "", tools: "" });
+  const [suggestLoading, setSuggestLoading] = React.useState(false);
+
+  function addSkill(category, skill) {
+    if (!skill || !category) return;
+    setData(prev => {
+      const copy = { ...prev };
+      copy.skills = { ...copy.skills };
+      const list = Array.isArray(copy.skills[category]) ? copy.skills[category] : [];
+      if (!list.includes(skill)) copy.skills[category] = [...list, skill];
+      return copy;
+    });
+    setSkillInput(prev => ({ ...prev, [category]: "" }));
+  }
+
+  function removeSkill(category, index) {
+    setData(prev => {
+      const copy = { ...prev };
+      copy.skills = { ...copy.skills };
+      copy.skills[category] = (copy.skills[category] || []).filter((_, i) => i !== index);
+      return copy;
+    });
+  }
+
+  function suggestSkills() {
+    setSuggestLoading(true);
+    setTimeout(() => {
+      setData(prev => {
+        const copy = { ...prev };
+        copy.skills = {
+          technical: Array.from(new Set([...(copy.skills.technical || []), "TypeScript", "React", "Node.js", "PostgreSQL", "GraphQL"])),
+          soft: Array.from(new Set([...(copy.skills.soft || []), "Team Leadership", "Problem Solving"])),
+          tools: Array.from(new Set([...(copy.skills.tools || []), "Git", "Docker", "AWS"]))
+        };
+        return copy;
+      });
+      setSuggestLoading(false);
+    }, 1000);
+  }
+
   // template helper
   function setTemplate(t) {
     setData(prev => ({ ...prev, template: t }));
@@ -52,12 +96,61 @@ export default function Builder() {
   }
 
   function addItem(section) {
+    if (section === "projects") {
+      const newProj = { id: Date.now(), title: "New Project", desc: "", tech: [], liveUrl: "", githubUrl: "", collapsed: false };
+      setData(prev => ({ ...prev, projects: [...(prev.projects || []), newProj] }));
+      return;
+    }
     const defaults = {
       education: { school: "", degree: "", year: "" },
-      experience: { company: "", role: "", years: "", bullets: [""] },
-      projects: { name: "", desc: "", bullets: [""] }
+      experience: { company: "", role: "", years: "", bullets: [""] }
     };
     setData(prev => ({ ...prev, [section]: [...prev[section], defaults[section]] }));
+  }
+
+  function updateProjectField(index, field, value) {
+    setData(prev => {
+      const copy = { ...prev };
+      copy.projects = (copy.projects || []).map((p,i) => i === index ? { ...p, [field]: value } : p);
+      return copy;
+    });
+  }
+
+  function addProjectTech(index, tech) {
+    if (!tech) return;
+    setData(prev => {
+      const copy = { ...prev };
+      copy.projects = (copy.projects || []).map((p,i) => {
+        if (i !== index) return p;
+        const list = Array.isArray(p.tech) ? p.tech : [];
+        return { ...p, tech: list.includes(tech) ? list : [...list, tech] };
+      });
+      return copy;
+    });
+  }
+
+  function removeProjectTech(index, techIndex) {
+    setData(prev => {
+      const copy = { ...prev };
+      copy.projects = (copy.projects || []).map((p,i) => {
+        if (i !== index) return p;
+        const list = (p.tech || []).filter((_,ti) => ti !== techIndex);
+        return { ...p, tech: list };
+      });
+      return copy;
+    });
+  }
+
+  function toggleProjectCollapse(index) {
+    setData(prev => {
+      const copy = { ...prev };
+      copy.projects = (copy.projects || []).map((p,i) => i === index ? { ...p, collapsed: !p.collapsed } : p);
+      return copy;
+    });
+  }
+
+  function deleteProject(index) {
+    setData(prev => ({ ...prev, projects: (prev.projects || []).filter((_,i) => i !== index) }));
   }
 
   function updateArrayItem(section, index, field, value) {
@@ -87,6 +180,21 @@ export default function Builder() {
       copy[section] = copy[section].map((it, i) => i === index ? item : it);
       return copy;
     });
+  }
+
+  // small tag input component for tech stack
+  function TechTagInput({ value = [], onAdd, onRemove }) {
+    const [input, setInput] = React.useState("");
+    return (
+      <div>
+        <div className="chips">
+          {(value || []).map((t, i) => (
+            <span key={i} className="chip">{t} <button onClick={()=>onRemove(i)} aria-label="remove">x</button></span>
+          ))}
+        </div>
+        <input placeholder="Type & Enter to add" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if (e.key === "Enter") { e.preventDefault(); const v = input.trim(); if (v) { onAdd(v); setInput(""); } } }} />
+      </div>
+    );
   }
 
   return (
@@ -160,34 +268,62 @@ export default function Builder() {
 
         <div className="form-section">
           <h3>Projects</h3>
-          {data.projects.map((p,i)=>(
-            <div key={i} className="proj-row">
-              <input placeholder="Project name" value={p.name || ""} onChange={e=>updateArrayItem("projects", i, "name", e.target.value)} />
-              <input placeholder="Short description" value={p.desc || ""} onChange={e=>updateArrayItem("projects", i, "desc", e.target.value)} />
-              <div className="bullets">
-                {(p.bullets || []).map((b, bi) => {
-                  const startsWithVerb = /^[\s]*((Built|Developed|Designed|Implemented|Led|Improved|Created|Optimized|Automated|Managed|Reduced|Increased|Delivered|Engineered)\b)/i.test(b || "");
-                  const hasNumber = /[\d%kK×xX]/.test(b || "");
-                  return (
-                    <div key={bi} className="bullet-row">
-                      <input placeholder="Bullet" value={b} onChange={e=>updateBullet("projects", i, bi, e.target.value)} />
-                      <div className="hint">
-                        {!startsWithVerb && (b || "").trim() !== "" && <span className="warn">Start with a strong action verb. </span>}
-                        {!hasNumber && (b || "").trim() !== "" && <span className="info">Add measurable impact (numbers).</span>}
-                      </div>
+          <div className="projects-accordion">
+            <button onClick={()=>addItem("projects")} className="tab">Add Project</button>
+            {(data.projects || []).map((p,i)=> {
+              const title = p.title || p.name || `Project ${i+1}`;
+              const collapsed = !!p.collapsed;
+              return (
+                <div key={p.id || i} className="project-entry">
+                  <div className="project-header" onClick={()=>toggleProjectCollapse(i)}>
+                    <strong>{title}</strong>
+                    <div>
+                      <button className="tab" onClick={(e)=>{ e.stopPropagation(); deleteProject(i); }}>Delete</button>
                     </div>
-                  );
-                })}
-                <button onClick={()=>addBullet("projects", i)}>Add bullet</button>
-              </div>
-            </div>
-          ))}
-          <button onClick={()=>addItem("projects")}>Add Project</button>
+                  </div>
+                  {!collapsed && (
+                    <div className="project-body">
+                      <input placeholder="Project Title" value={p.title || p.name || ""} onChange={e=>updateProjectField(i, "title", e.target.value)} />
+                      <textarea maxLength={200} placeholder="Description (max 200 chars)" value={p.desc || p.description || ""} onChange={e=>updateProjectField(i, "desc", e.target.value)} />
+                      <div className="char-count">{(p.desc||p.description||"").length}/200</div>
+                      <div className="form-section">
+                        <label>Tech Stack</label>
+                        <TechTagInput value={p.tech || p.stack || []} onAdd={(tech)=>addProjectTech(i, tech)} onRemove={(ti)=>removeProjectTech(i, ti)} />
+                      </div>
+                      <input placeholder="Live URL (optional)" value={p.liveUrl || p.live_url || ""} onChange={e=>updateProjectField(i, "liveUrl", e.target.value)} />
+                      <input placeholder="GitHub URL (optional)" value={p.githubUrl || p.github_url || ""} onChange={e=>updateProjectField(i, "githubUrl", e.target.value)} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-
         <div className="form-section">
           <h3>Skills</h3>
-          <input placeholder="Comma separated skills" value={data.skills} onChange={e=>setData({...data,skills:e.target.value})} />
+          <div className="skill-groups">
+            {[
+              {key:"technical", label:"Technical Skills"},
+              {key:"soft", label:"Soft Skills"},
+              {key:"tools", label:"Tools & Technologies"}
+            ].map(group => (
+              <div key={group.key} className="skill-group">
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <strong>{group.label} ({(data.skills && data.skills[group.key] ? data.skills[group.key].length : 0)})</strong>
+                </div>
+                <div className="chips">
+                  {(data.skills && data.skills[group.key] || []).map((s,si)=>(
+                    <span key={si} className="chip">{s} <button onClick={()=>removeSkill(group.key, si)} aria-label="remove">x</button></span>
+                  ))}
+                </div>
+                <input placeholder={`Add ${group.label}`} value={skillInput[group.key] || ""} onChange={e=>setSkillInput(prev=>({...prev,[group.key]:e.target.value}))}
+                  onKeyDown={e=>{ if (e.key === "Enter") { e.preventDefault(); addSkill(group.key, (skillInput[group.key]||"").trim()); } }} />
+              </div>
+            ))}
+            <div style={{marginTop:8}}>
+              <button className="tab" onClick={suggestSkills} disabled={suggestLoading}>{suggestLoading ? "Suggesting..." : "✨ Suggest Skills"}</button>
+            </div>
+          </div>
         </div>
 
         <div className="form-section">

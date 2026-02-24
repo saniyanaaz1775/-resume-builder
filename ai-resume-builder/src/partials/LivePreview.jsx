@@ -13,7 +13,10 @@ export default function LivePreview({ data }) {
     const summaryWords = wordCount(data.summary);
     const projectsCount = (data.projects || []).filter(p => (p.name || p.desc || (p.bullets && p.bullets.some(Boolean)))).length;
     const experienceCount = (data.experience || []).filter(e => (e.company || e.role || (e.bullets && e.bullets.some(Boolean)))).length;
-    const skillsCount = (data.skills || "").split(",").map(s=>s.trim()).filter(Boolean).length;
+    let skillsCount = 0;
+    if (!data.skills) skillsCount = 0;
+    else if (typeof data.skills === "string") skillsCount = (data.skills || "").split(",").map(s=>s.trim()).filter(Boolean).length;
+    else if (typeof data.skills === "object") skillsCount = Object.values(data.skills).flat().filter(Boolean).length;
     const hasLink = !!((data.links || {}).github || (data.links || {}).linkedin);
     const educationComplete = (data.education || []).some(ed => ed.school && ed.degree && ed.year);
 
@@ -53,7 +56,19 @@ export default function LivePreview({ data }) {
   const showExperience = (data.experience || []).some(e => e.company || e.role || (e.bullets && e.bullets.some(Boolean)));
   const showEducation = (data.education || []).some(ed => ed.school || ed.degree || ed.year);
   const showProjects = (data.projects || []).some(p => p.name || p.desc || (p.bullets && p.bullets.some(Boolean)));
-  const showSkills = (data.skills || "").trim().length > 0;
+  let showSkills = false;
+  let skillsGroups = { technical: [], soft: [], tools: [] };
+  if (data.skills) {
+    if (typeof data.skills === "string") {
+      showSkills = (data.skills || "").trim().length > 0;
+      skillsGroups.technical = (data.skills || "").split(",").map(s=>s.trim()).filter(Boolean);
+    } else {
+      skillsGroups.technical = data.skills.technical || [];
+      skillsGroups.soft = data.skills.soft || [];
+      skillsGroups.tools = data.skills.tools || [];
+      showSkills = skillsGroups.technical.length + skillsGroups.soft.length + skillsGroups.tools.length > 0;
+    }
+  }
   const showLinks = !!((data.links || {}).github || (data.links || {}).linkedin);
 
   const templateClass = (data.template || "Classic").toLowerCase();
@@ -114,15 +129,29 @@ export default function LivePreview({ data }) {
         <section className="preview-section">
           <h4>Projects</h4>
           {(data.projects || []).map((p,i) => {
-            if (!p.name && !p.desc && !(p.bullets && p.bullets.some(Boolean))) return null;
+            const title = p.title || p.name;
+            const desc = p.desc || p.description || "";
+            const tech = p.tech || p.stack || [];
+            if (!title && !desc && !(p.bullets && p.bullets.some(Boolean))) return null;
             return (
-              <div key={i} className="preview-item">
-                <strong>{p.name}</strong>
-                <div className="muted">{p.desc}</div>
+              <article key={p.id || i} className="project-card">
+                <div className="project-head">
+                  <strong>{title}</strong>
+                  <div className="project-links">
+                    {p.liveUrl && <a href={p.liveUrl} target="_blank" rel="noreferrer" aria-label="Live link">🔗</a>}
+                    {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noreferrer" aria-label="GitHub link">🐙</a>}
+                  </div>
+                </div>
+                {desc && <div className="muted">{desc}</div>}
+                { (tech || []).length > 0 && (
+                  <div className="tech-pills">
+                    {(tech || []).map((t,ti) => <span key={ti} className="chip">{t}</span>)}
+                  </div>
+                )}
                 <ul>
                   {(p.bullets || []).filter(Boolean).map((b, bi) => <li key={bi}>{b}</li>)}
                 </ul>
-              </div>
+              </article>
             );
           })}
         </section>
@@ -146,7 +175,26 @@ export default function LivePreview({ data }) {
       {showSkills && (
         <section className="preview-section">
           <h4>Skills</h4>
-          <p>{(data.skills || "").split(",").map(s=>s.trim()).filter(Boolean).join(", ")}</p>
+          <div className="skill-preview-groups">
+            {skillsGroups.technical.length > 0 && (
+              <div>
+                <strong>Technical Skills</strong>
+                <div className="tech-pills">{skillsGroups.technical.map((s,i)=><span key={i} className="chip">{s}</span>)}</div>
+              </div>
+            )}
+            {skillsGroups.soft.length > 0 && (
+              <div>
+                <strong>Soft Skills</strong>
+                <div className="tech-pills">{skillsGroups.soft.map((s,i)=><span key={i} className="chip">{s}</span>)}</div>
+              </div>
+            )}
+            {skillsGroups.tools.length > 0 && (
+              <div>
+                <strong>Tools & Technologies</strong>
+                <div className="tech-pills">{skillsGroups.tools.map((s,i)=><span key={i} className="chip">{s}</span>)}</div>
+              </div>
+            )}
+          </div>
         </section>
       )}
 
