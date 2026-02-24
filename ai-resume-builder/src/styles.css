@@ -107,6 +107,14 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);c
 .project-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:6px}
 .project-body{padding:8px 0}
 
+/* circular score */
+.score-block.circular{display:flex;gap:12px;align-items:center;flex-direction:row}
+.score-circle{width:88px;height:88px}
+.score-meta{display:flex;flex-direction:column}
+.score-label{font-size:12px;color:#666}
+.score-status{font-weight:700;margin-top:4px}
+.improvements{max-width:260px}
+
 /* Template picker and thumbnails */
 .template-picker{display:flex;flex-direction:column;gap:8px;padding-bottom:10px}
 .thumbnails{display:flex;gap:10px;align-items:center}

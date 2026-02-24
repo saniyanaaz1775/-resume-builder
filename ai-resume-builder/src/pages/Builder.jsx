@@ -92,7 +92,8 @@ export default function Builder() {
   }
 
   function loadSample() {
-    setData(sample);
+    // merge sample into existing state so we don't lose any scaffold fields
+    setData(prev => ({ ...prev, ...sample }));
   }
 
   function addItem(section) {

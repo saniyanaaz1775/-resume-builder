@@ -10,44 +10,63 @@ function hasNumberLike(text = "") {
 
 export default function LivePreview({ data, onChange }) {
   const scoreData = useMemo(() => {
-    const summaryWords = wordCount(data.summary);
-    const projectsCount = (data.projects || []).filter(p => (p.name || p.desc || (p.bullets && p.bullets.some(Boolean)))).length;
-    const experienceCount = (data.experience || []).filter(e => (e.company || e.role || (e.bullets && e.bullets.some(Boolean)))).length;
+    // New ATS scoring rules (deterministic)
+    const nameProvided = !!((data.personal || {}).name && (data.personal.name || "").trim());
+    const emailProvided = !!((data.personal || {}).email && (data.personal.email || "").trim());
+    const phoneProvided = !!((data.personal || {}).phone && (data.personal.phone || "").trim());
+
+    const summaryText = (data.summary || "").trim();
+    const summaryLong = summaryText.length > 50;
+    const summaryHasVerb = /\b(built|led|designed|improved|implemented|created|developed|engineered|managed|optimized)\b/i.test(summaryText);
+
+    const experienceWithBullets = (data.experience || []).filter(e => (e.bullets || []).filter(Boolean).length > 0).length;
+    const educationCount = (data.education || []).filter(ed => (ed.school || ed.degree || ed.year)).length;
     let skillsCount = 0;
     if (!data.skills) skillsCount = 0;
     else if (typeof data.skills === "string") skillsCount = (data.skills || "").split(",").map(s=>s.trim()).filter(Boolean).length;
     else if (typeof data.skills === "object") skillsCount = Object.values(data.skills).flat().filter(Boolean).length;
-    const hasLink = !!((data.links || {}).github || (data.links || {}).linkedin);
-    const educationComplete = (data.education || []).some(ed => ed.school && ed.degree && ed.year);
+    const projectsCount = (data.projects || []).filter(p => (p.title || p.name || p.desc)).length;
+    const hasLinkedIn = !!((data.links || {}).linkedin);
+    const hasGitHub = !!((data.links || {}).github);
 
     let score = 0;
-    if (summaryWords >= 40 && summaryWords <= 120) score += 15;
-    if (projectsCount >= 2) score += 10;
-    if (experienceCount >= 1) score += 10;
-    if (skillsCount >= 8) score += 10;
-    if (hasLink) score += 10;
-
-    // any experience/project bullet contains number-like token
-    const allBullets = [
-      ...(data.experience || []).flatMap(e => e.bullets || []),
-      ...(data.projects || []).flatMap(p => p.bullets || [])
-    ];
-    if (allBullets.some(b => hasNumberLike(b))) score += 15;
-    if (educationComplete) score += 10;
+    if (nameProvided) score += 10;
+    if (emailProvided) score += 10;
+    if (summaryLong) score += 10;
+    if (experienceWithBullets >= 1) score += 15;
+    if (educationCount >= 1) score += 10;
+    if (skillsCount >= 5) score += 10;
+    if (projectsCount >= 1) score += 10;
+    if (phoneProvided) score += 5;
+    if (hasLinkedIn) score += 5;
+    if (hasGitHub) score += 5;
+    if (summaryHasVerb) score += 10;
 
     if (score > 100) score = 100;
 
-    // suggestions
+    // Build suggestions (show missing items with potential points)
     const suggestions = [];
-    if (summaryWords < 40 || summaryWords > 120) suggestions.push("Write a stronger summary (40–120 words).");
-    if (projectsCount < 2) suggestions.push("Add at least 2 projects.");
-    if (experienceCount < 1) suggestions.push("Add at least one experience entry.");
-    if (skillsCount < 8) suggestions.push("Add more skills (target 8+).");
-    if (!allBullets.some(b => hasNumberLike(b))) suggestions.push("Add measurable impact (numbers) in bullets.");
-    if (!hasLink) suggestions.push("Add a GitHub or LinkedIn link.");
-    if (!educationComplete && (data.education || []).length > 0) suggestions.push("Complete education fields (school, degree, year).");
+    if (!nameProvided) suggestions.push({ text: "Add your name", points: 10 });
+    if (!emailProvided) suggestions.push({ text: "Add a professional email", points: 10 });
+    if (!summaryLong) suggestions.push({ text: "Write a longer professional summary (+10 points)", points: 10 });
+    if (experienceWithBullets < 1) suggestions.push({ text: "Add an experience entry with bullets (+15 points)", points: 15 });
+    if (educationCount < 1) suggestions.push({ text: "Add an education entry (+10 points)", points: 10 });
+    if (skillsCount < 5) suggestions.push({ text: "Add more skills (target 5+) (+10 points)", points: 10 });
+    if (projectsCount < 1) suggestions.push({ text: "Add at least one project (+10 points)", points: 10 });
+    if (!phoneProvided) suggestions.push({ text: "Add a phone number (+5 points)", points: 5 });
+    if (!hasLinkedIn) suggestions.push({ text: "Add a LinkedIn URL (+5 points)", points: 5 });
+    if (!hasGitHub) suggestions.push({ text: "Add a GitHub URL (+5 points)", points: 5 });
+    if (!summaryHasVerb && summaryText.length > 0) suggestions.push({ text: "Use action verbs in your summary (+10 points)", points: 10 });
 
-    return { score, suggestions: suggestions.slice(0,3), details: { summaryWords, projectsCount, experienceCount, skillsCount, hasLink, educationComplete } };
+    // Sort suggestions by points descending and take top 5
+    suggestions.sort((a,b)=>b.points - a.points);
+    const topSuggestions = suggestions.slice(0,5);
+
+    return {
+      score,
+      suggestions: topSuggestions,
+      details: { nameProvided, emailProvided, summaryLong, summaryHasVerb, experienceWithBullets, educationCount, skillsCount, projectsCount, phoneProvided, hasLinkedIn, hasGitHub }
+    };
   }, [data]);
 
   const { score, suggestions } = scoreData;
@@ -163,17 +182,34 @@ export default function LivePreview({ data, onChange }) {
           })}
         </div>
       </div>
-      <div className="score-block">
-        <label className="score-label">ATS Readiness Score</label>
-        <div className="score-meter" aria-hidden>
-          <div className="score-fill" style={{width: `${score}%`}} />
+      <div className="score-block circular">
+        <div className="score-circle" role="img" aria-label={`ATS score ${score} out of 100`}>
+          <svg width="88" height="88" viewBox="0 0 88 88">
+            <circle cx="44" cy="44" r="36" stroke="#eee" strokeWidth="8" fill="none" />
+            <circle
+              cx="44"
+              cy="44"
+              r="36"
+              strokeWidth="8"
+              strokeLinecap="round"
+              stroke={score >= 71 ? "green" : score >= 41 ? "orange" : "red"}
+              fill="none"
+              strokeDasharray={2 * Math.PI * 36}
+              strokeDashoffset={(1 - score / 100) * 2 * Math.PI * 36}
+              transform="rotate(-90 44 44)"
+            />
+            <text x="44" y="48" textAnchor="middle" fontSize="12" fontWeight="700" fill="#111">{score}</text>
+          </svg>
         </div>
-        <div className="score-value">{score}/100</div>
+        <div className="score-meta">
+          <div className="score-label">ATS Readiness</div>
+          <div className="score-status">{score <= 40 ? "Needs Work" : score <= 70 ? "Getting There" : "Strong Resume"}</div>
+        </div>
         {suggestions.length > 0 && (
           <div className="improvements">
-            <div style={{fontWeight:700,marginTop:10}}>Top 3 Improvements</div>
+            <div style={{fontWeight:700,marginTop:10}}>Improvement suggestions</div>
             <ul className="suggestions">
-              {suggestions.map((s, i) => <li key={i}>{s}</li>)}
+              {suggestions.map((s, i) => <li key={i}>{s.text} {s.points ? `(+${s.points})` : ""}</li>)}
             </ul>
           </div>
         )}
