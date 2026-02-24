@@ -68,3 +68,27 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);c
 .tab.active{background:#111;color:#fff;border-color:#111}
 .tabs-label{font-size:13px;color:#444;margin-right:8px;font-weight:600}
 
+/* Print styles */
+@media print {
+  /* hide navigation and UI controls */
+  .top-nav, .tab, .form-actions, .preview-clean > div, .container > div[style] { display: none !important; }
+  body * { background: white !important; color: #000 !important; }
+  .resume-print, .resume-print * { background: white !important; color: #000 !important; box-shadow: none !important; }
+  /* ensure good margins */
+  @page { margin: 20mm; }
+  .resume-print { margin: 0; padding: 0; }
+  /* hide UI-only panels like ATS score in print */
+  .score-block { display: none !important; }
+  /* prevent breaking inside items */
+  .preview-item, .preview-section, .preview-card, .preview-header, .preview-item ul, .preview-item li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  /* remove color accents */
+  .top-nav .nav-left, .preview-card .score-fill { color: #000 !important; background: #000 !important; }
+}
+
+/* Layout precision helpers */
+.resume-print { page-break-after: auto; }
+.preview-item { overflow: visible; }
+
